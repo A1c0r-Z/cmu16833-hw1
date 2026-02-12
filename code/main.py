@@ -59,6 +59,38 @@ def init_particles_freespace(num_particles, occupancy_map):
     This version converges faster than init_particles_random
     """
     X_bar_init = np.zeros((num_particles, 4))
+    free_space_indices = np.argwhere(occupancy_map == 0) # returns [row, col] -> [y_idx, x_idx]
+    resolution = 10.0
+    
+    x_min_grid = 3000 / resolution
+    x_max_grid = 7000 / resolution
+    y_min_grid = 0    / resolution
+    y_max_grid = 7000 / resolution
+    mask = (
+        (free_space_indices[:, 1] >= x_min_grid) & 
+        (free_space_indices[:, 1] < x_max_grid) & 
+        (free_space_indices[:, 0] >= y_min_grid) & 
+        (free_space_indices[:, 0] < y_max_grid)
+    )
+    valid_indices = free_space_indices[mask]
+    
+    if len(valid_indices) == 0:
+        raise ValueError("No free space found within the specified ROI [3000-7000, 0-7000].")
+
+    random_indices = np.random.choice(len(valid_indices), size=num_particles, replace=True)
+    selected_grids = valid_indices[random_indices] # [y_idx, x_idx] pairs
+    
+    x_vals = (selected_grids[:, 1] * resolution) + np.random.uniform(0, resolution, num_particles)
+    y_vals = (selected_grids[:, 0] * resolution) + np.random.uniform(0, resolution, num_particles)
+    
+    theta_vals = np.random.uniform(-np.pi, np.pi, num_particles)
+    w_vals = np.ones(num_particles) / num_particles
+    
+    # 7. Stack into final array
+    X_bar_init[:, 0] = x_vals
+    X_bar_init[:, 1] = y_vals
+    X_bar_init[:, 2] = theta_vals
+    X_bar_init[:, 3] = w_vals
 
     return X_bar_init
 
@@ -80,8 +112,8 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_map', default='../data/map/wean.dat')
     parser.add_argument('--path_to_log', default='../data/log/robotdata1.log')
     parser.add_argument('--output', default='results')
-    parser.add_argument('--num_particles', default=500, type=int)
-    parser.add_argument('--visualize', action='store_true')
+    parser.add_argument('--num_particles', default=1000, type=int)
+    parser.add_argument('--visualize', action='store_true', default=True)
     args = parser.parse_args()
 
     src_path_map = args.path_to_map
@@ -97,7 +129,7 @@ if __name__ == '__main__':
     resampler = Resampling()
 
     num_particles = args.num_particles
-    X_bar = init_particles_random(num_particles, occupancy_map)
+    X_bar = init_particles_freespace(num_particles, occupancy_map)
     # X_bar = init_particles_freespace(num_particles, occupancy_map)
     """
     Monte Carlo Localization Algorithm : Main Loop
