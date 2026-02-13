@@ -25,11 +25,11 @@ class SensorModel:
         """
         # Tuned parameters matching the reference logic
         self._z_hit = 1.0       
-        self._z_short = 0.12
-        self._z_max = 0.05
-        self._z_rand = 400
+        self._z_short = 0.05
+        self._z_max = 0.01
+        self._z_rand = 0.1
 
-        self._sigma_hit = 100.0
+        self._sigma_hit = 30.0
         self._lambda_short = 0.1
 
         # Used in p_max and p_rand, optionally in ray casting
@@ -39,7 +39,7 @@ class SensorModel:
         self._min_probability = 0.35
 
         # Used in sampling angles in ray casting
-        self._subsampling = 3
+        self._subsampling = 2
 
         self._occupancy_map = occupancy_map
         self._resolution = 10.0
